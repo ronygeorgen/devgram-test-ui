@@ -139,7 +139,7 @@ const Login = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+          {/* <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
             <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
               Demo Credentials:
             </Typography>
@@ -149,7 +149,7 @@ const Login = () => {
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
               Password: pass123
             </Typography>
-          </Box>
+          </Box> */}
         </Paper>
       </Container>
     </Box>
