@@ -5,10 +5,15 @@ import Layout from '../../components/Layout';
 import FeedCard from './components/FeedCard';
 import CreatePostModal from './components/CreatePostModal';
 import CommentDrawer from './components/CommentDrawer';
-import { useApp } from '../../context/AppContext';
+import { usePosts } from '../../hooks/usePosts';
+import { useProfiles } from '../../hooks/useProfiles';
+import { useAuth } from '../../hooks/useAuth';
 
 const FeedPage = () => {
-  const { posts, profile, addPost } = useApp();
+  const { posts, addPost } = usePosts();
+  const { currentProfile, allProfiles } = useProfiles();
+  const { user } = useAuth();
+  
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [commentDrawerOpen, setCommentDrawerOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -38,20 +43,20 @@ const FeedPage = () => {
             <Box sx={{ p: 2, position: 'sticky', top: 80 }}>
               <Paper sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Avatar src={profile?.avatarUrl} sx={{ width: 48, height: 48 }} />
+                  <Avatar src={currentProfile?.avatarUrl} sx={{ width: 48, height: 48 }} />
                   <Box>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {profile?.fullName}
+                      {currentProfile?.fullName}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      @{profile?.username}
+                      @{currentProfile?.username}
                     </Typography>
                   </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                   <Box>
                     <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                      {profile?.stats.followersCount}
+                      {currentProfile?.stats.followersCount}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Followers
@@ -59,7 +64,7 @@ const FeedPage = () => {
                   </Box>
                   <Box>
                     <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                      {profile?.stats.followingCount}
+                      {currentProfile?.stats.followingCount}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Following

@@ -5,9 +5,12 @@ import { useState } from 'react';
 const ProjectCard = ({ project }) => {
   const [liked, setLiked] = useState(false);
 
+  // Use _id instead of id for MongoDB
+  const projectId = project._id || project.id;
+
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
-      {project.images && project.images[0] && (
+      {project.images && project.images.length > 0 && project.images[0] && (
         <CardMedia
           component="img"
           height="200"

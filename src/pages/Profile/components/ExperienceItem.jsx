@@ -2,6 +2,8 @@ import { Box, Typography, Paper, Chip, Avatar } from '@mui/material';
 import { formatDateFull } from '../../../utils/formatDate';
 
 const ExperienceItem = ({ experience }) => {
+  if (!experience) return null;
+
   return (
     <Paper sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}>
       <Box sx={{ display: 'flex', gap: 2 }}>

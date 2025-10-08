@@ -1,48 +1,76 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Container, Box, TextField, Button, Typography, Paper, Alert, Link } from '@mui/material';
 import { Code } from '@mui/icons-material';
-import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { signup } = useApp();
+  const { signup, isAuthenticated, loading, error, clearError } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
 
-  const handleSubmit = (e) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/feed');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear errors when component unmounts
+  useEffect(() => {
+    return () => {
+      clearError();
+    };
+  }, [clearError]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
+    clearError();
 
+    // Client-side validation
     if (!username || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
+      setFormError('Please fill in all fields');
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email');
+      setFormError('Please enter a valid email');
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setFormError('Password must be at least 6 characters');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setFormError('Passwords do not match');
       return;
     }
 
-    const success = signup(username, email, password);
-    if (success) {
-      navigate('/feed');
+    const result = await signup(username, email, password);
+    
+    if (result.success) {
+      // After successful signup, redirect to login or auto-login
+      // For now, redirect to login page with success message
+      navigate('/login', { 
+        state: { message: 'Account created successfully! Please sign in.' } 
+      });
     } else {
-      setError('Failed to create account');
+      console.error('Signup failed:', result.error);
     }
+  };
+
+  const handleInputChange = (setter) => (e) => {
+    setter(e.target.value);
+    // Clear errors when user starts typing
+    if (formError) setFormError('');
+    if (error) clearError();
   };
 
   return (
@@ -72,9 +100,9 @@ const Signup = () => {
             Create an account to connect with developers worldwide
           </Typography>
 
-          {error && (
+          {(error || formError) && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
+              {error || formError}
             </Alert>
           )}
 
@@ -83,46 +111,65 @@ const Signup = () => {
               fullWidth
               label="Username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={handleInputChange(setUsername)}
+              disabled={loading}
               sx={{ mb: 2 }}
               autoComplete="username"
+              required
             />
             <TextField
               fullWidth
               label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleInputChange(setEmail)}
+              disabled={loading}
               sx={{ mb: 2 }}
               autoComplete="email"
+              required
             />
             <TextField
               fullWidth
               label="Password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handleInputChange(setPassword)}
+              disabled={loading}
               sx={{ mb: 2 }}
               autoComplete="new-password"
+              required
             />
             <TextField
               fullWidth
               label="Confirm Password"
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={handleInputChange(setConfirmPassword)}
+              disabled={loading}
               sx={{ mb: 3 }}
               autoComplete="new-password"
+              required
             />
-            <Button type="submit" variant="contained" fullWidth size="large" sx={{ mb: 2 }}>
-              Sign Up
+            <Button 
+              type="submit" 
+              variant="contained" 
+              fullWidth 
+              size="large" 
+              disabled={loading}
+              sx={{ mb: 2 }}
+            >
+              {loading ? 'Creating Account...' : 'Sign Up'}
             </Button>
           </Box>
 
           <Box sx={{ textAlign: 'center', mt: 2 }}>
             <Typography variant="body2" color="text.secondary">
               Already have an account?{' '}
-              <Link component={RouterLink} to="/login" sx={{ color: 'primary.main', fontWeight: 600, textDecoration: 'none' }}>
+              <Link 
+                component={RouterLink} 
+                to="/login" 
+                sx={{ color: 'primary.main', fontWeight: 600, textDecoration: 'none' }}
+              >
                 Sign In
               </Link>
             </Typography>

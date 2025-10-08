@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Container, Tabs, Tab, Grid, Typography } from '@mui/material';
+import { Box, Container, Tabs, Tab, Grid, Typography, Button } from '@mui/material';
+import { Add } from '@mui/icons-material';
 import Layout from '../../components/Layout';
 import ProfileHeader from './components/ProfileHeader';
 import ProjectCard from './components/ProjectCard';
@@ -8,38 +9,77 @@ import EducationItem from './components/EducationItem';
 import ExperienceItem from './components/ExperienceItem';
 import FeedCard from '../Feed/components/FeedCard';
 import CommentDrawer from '../Feed/components/CommentDrawer';
-import { useApp } from '../../context/AppContext';
+import CreateProjectModal from '../../components/Project/CreateProjectModal';
+import { useProjects } from '../../hooks/useProjects';
+import { useAuth } from '../../hooks/useAuth';
+import { useProfiles } from '../../hooks/useProfiles';
+import { usePosts } from '../../hooks/usePosts';
 
 const ProfilePage = () => {
   const { username } = useParams();
-  const { profile: currentProfile, getProfileByUsername, getPostsByUserId, projects, education, experience } = useApp();
+  const { user, isAuthenticated } = useAuth();
+  const { currentProfile, getProfileByUsername, fetchProfileByUsername } = useProfiles();
+  const { posts } = usePosts();
+  const { projects, fetchProjects } = useProjects();
+  
   const [activeTab, setActiveTab] = useState(0);
   const [commentDrawerOpen, setCommentDrawerOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const profile = getProfileByUsername(username);
+  // Get the profile for the current username
+  const profile = getProfileByUsername(username) || currentProfile;
   const isOwnProfile = currentProfile?.username === username;
-  const userPosts = profile ? getPostsByUserId(profile.userId) : [];
-  const userProjects = profile ? projects.filter(p => p.userId === profile.userId) : [];
-  const userEducation = profile ? education.filter(e => e.userId === profile.userId) : [];
-  const userExperience = profile ? experience.filter(e => e.userId === profile.userId) : [];
+  
+  // Filter posts and projects for the current profile
+  const userPosts = posts.filter(post => post.userId === profile?.userId);
+  const userProjects = projects.filter(project => project.userId === profile?.userId);
 
-  if (!profile) {
+  useEffect(() => {
+    // Fetch profile if not found
+    if (username && !profile) {
+      fetchProfileByUsername(username);
+    }
+    
+    // Fetch projects when component mounts for own profile
+    if (isOwnProfile) {
+      fetchProjects(false);
+    }
+  }, [username, profile, isOwnProfile, fetchProjects, fetchProfileByUsername]);
+
+  const handleCommentClick = (post) => {
+    setSelectedPost(post);
+    setCommentDrawerOpen(true);
+  };
+
+  const handleProjectCreated = (newProject) => {
+    setCreateModalOpen(false);
+  };
+
+  // Show loading while checking authentication
+  if (!isAuthenticated) {
     return (
       <Layout>
         <Container maxWidth="lg" sx={{ py: 4 }}>
           <Typography variant="h4" sx={{ textAlign: 'center' }}>
-            Profile not found
+            Please log in to view profiles
           </Typography>
         </Container>
       </Layout>
     );
   }
 
-  const handleCommentClick = (post) => {
-    setSelectedPost(post);
-    setCommentDrawerOpen(true);
-  };
+  if (!profile) {
+    return (
+      <Layout>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Typography variant="h4" sx={{ textAlign: 'center' }}>
+            Loading profile...
+          </Typography>
+        </Container>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -73,14 +113,26 @@ const ProfilePage = () => {
 
         {activeTab === 1 && (
           <Box>
+            {isOwnProfile && (
+              <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => setCreateModalOpen(true)}
+                >
+                  Add Project
+                </Button>
+              </Box>
+            )}
+            
             {userProjects.length === 0 ? (
               <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No projects yet
+                {isOwnProfile ? 'You haven\'t added any projects yet.' : 'No projects yet'}
               </Typography>
             ) : (
               <Grid container spacing={2}>
                 {userProjects.map((project) => (
-                  <Grid item xs={12} sm={6} md={4} key={project.id}>
+                  <Grid item xs={12} sm={6} md={4} key={project._id || project.id}>
                     <ProjectCard project={project} />
                   </Grid>
                 ))}
@@ -91,33 +143,17 @@ const ProfilePage = () => {
 
         {activeTab === 2 && (
           <Box>
-            {userExperience.length === 0 ? (
-              <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No experience added yet
-              </Typography>
-            ) : (
-              <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-                {userExperience.map((exp) => (
-                  <ExperienceItem key={exp.id} experience={exp} />
-                ))}
-              </Box>
-            )}
+            <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+              No experience added yet
+            </Typography>
           </Box>
         )}
 
         {activeTab === 3 && (
           <Box>
-            {userEducation.length === 0 ? (
-              <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No education added yet
-              </Typography>
-            ) : (
-              <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-                {userEducation.map((edu) => (
-                  <EducationItem key={edu.id} education={edu} />
-                ))}
-              </Box>
-            )}
+            <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+              No education added yet
+            </Typography>
           </Box>
         )}
       </Container>
@@ -126,6 +162,12 @@ const ProfilePage = () => {
         open={commentDrawerOpen}
         onClose={() => setCommentDrawerOpen(false)}
         post={selectedPost}
+      />
+
+      <CreateProjectModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSuccess={handleProjectCreated}
       />
     </Layout>
   );

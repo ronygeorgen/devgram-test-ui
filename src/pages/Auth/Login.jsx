@@ -1,31 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Container, Box, TextField, Button, Typography, Paper, Alert, Link } from '@mui/material';
 import { Code } from '@mui/icons-material';
-import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useApp();
+  const { login, isAuthenticated, loading, error, clearError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
 
-  const handleSubmit = (e) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/feed');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear errors when component unmounts or when input changes
+  useEffect(() => {
+    return () => {
+      clearError();
+    };
+  }, [clearError]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
+    clearError();
 
+    // Client-side validation
     if (!email || !password) {
-      setError('Please fill in all fields');
+      setFormError('Please fill in all fields');
       return;
     }
 
-    const success = login(email, password);
-    if (success) {
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setFormError('Please enter a valid email');
+      return;
+    }
+
+    const result = await login(email, password);
+    
+    if (result.success) {
       navigate('/feed');
     } else {
-      setError('Invalid email or password');
+      // Error is already set in Redux state
+      console.error('Login failed:', result.error);
     }
+  };
+
+  const handleInputChange = (setter) => (e) => {
+    setter(e.target.value);
+    // Clear errors when user starts typing
+    if (formError) setFormError('');
+    if (error) clearError();
   };
 
   return (
@@ -55,9 +85,9 @@ const Login = () => {
             Sign in to continue to your developer network
           </Typography>
 
-          {error && (
+          {(error || formError) && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
+              {error || formError}
             </Alert>
           )}
 
@@ -67,28 +97,43 @@ const Login = () => {
               label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleInputChange(setEmail)}
+              disabled={loading}
               sx={{ mb: 2 }}
               autoComplete="email"
+              required
             />
             <TextField
               fullWidth
               label="Password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handleInputChange(setPassword)}
+              disabled={loading}
               sx={{ mb: 3 }}
               autoComplete="current-password"
+              required
             />
-            <Button type="submit" variant="contained" fullWidth size="large" sx={{ mb: 2 }}>
-              Sign In
+            <Button 
+              type="submit" 
+              variant="contained" 
+              fullWidth 
+              size="large" 
+              disabled={loading}
+              sx={{ mb: 2 }}
+            >
+              {loading ? 'Signing In...' : 'Sign In'}
             </Button>
           </Box>
 
           <Box sx={{ textAlign: 'center', mt: 2 }}>
             <Typography variant="body2" color="text.secondary">
               Don't have an account?{' '}
-              <Link component={RouterLink} to="/signup" sx={{ color: 'primary.main', fontWeight: 600, textDecoration: 'none' }}>
+              <Link 
+                component={RouterLink} 
+                to="/signup" 
+                sx={{ color: 'primary.main', fontWeight: 600, textDecoration: 'none' }}
+              >
                 Sign Up
               </Link>
             </Typography>

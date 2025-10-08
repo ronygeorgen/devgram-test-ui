@@ -125,4 +125,3 @@ const CreatePostModal = ({ open, onClose, onSubmit }) => {
 };
 
 export default CreatePostModal;
-

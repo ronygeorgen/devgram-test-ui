@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { Card, CardHeader, CardContent, CardMedia, CardActions, Avatar, IconButton, Typography, Chip, Box, Menu, MenuItem } from '@mui/material';
 import { Favorite, FavoriteBorder, ChatBubbleOutline, Share, MoreVert, Code } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../../../context/AppContext';
+import { usePosts } from '../../../hooks/usePosts';
+import { useProfiles } from '../../../hooks/useProfiles';
 import { formatDate } from '../../../utils/formatDate';
 
 const FeedCard = ({ post, onComment }) => {
-  const { allProfiles, toggleLike, sharePost } = useApp();
+  const { allProfiles, getProfileByUserId } = useProfiles();
+  const { toggleLike, sharePost } = usePosts();
   const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [playing, setPlaying] = useState(false);
 
-  const profile = allProfiles.find(p => p.userId === post.userId);
+  const profile = getProfileByUserId(post.userId);
 
   const handleLike = () => {
     setLiked(!liked);

@@ -2,6 +2,8 @@ import { Box, Typography, Paper, Chip } from '@mui/material';
 import { School } from '@mui/icons-material';
 
 const EducationItem = ({ education }) => {
+  if (!education) return null;
+
   return (
     <Paper sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}>
       <Box sx={{ display: 'flex', gap: 2 }}>
@@ -26,7 +28,7 @@ const EducationItem = ({ education }) => {
             {education.university}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            {education.location} • {education.startYear} - {education.endYear}
+            {education.location} • {education.startYear} - {education.endYear || 'Present'}
           </Typography>
           {education.achievements && education.achievements.length > 0 && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>

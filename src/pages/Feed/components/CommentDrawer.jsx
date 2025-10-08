@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { Drawer, Box, Typography, IconButton, TextField, Button, Avatar, Divider } from '@mui/material';
 import { Close } from '@mui/icons-material';
-import { useApp } from '../../../context/AppContext';
+import { usePosts } from '../../../hooks/usePosts';
+import { useProfiles } from '../../../hooks/useProfiles';
+import { useAuth } from '../../../hooks/useAuth';
 import { formatDate } from '../../../utils/formatDate';
 
 const CommentDrawer = ({ open, onClose, post }) => {
-  const { getCommentsByPostId, addComment, allProfiles, profile } = useApp();
+  const { comments, addComment, getCommentsByPostId } = usePosts();
+  const { allProfiles, getProfileByUserId } = useProfiles();
+  const { user } = useAuth();
   const [commentText, setCommentText] = useState('');
 
   if (!post) return null;
 
-  const comments = getCommentsByPostId(post.id);
+  const postComments = getCommentsByPostId(post.id);
+  const currentUserProfile = allProfiles.find(p => p.userId === user?.id);
 
   const handleSubmit = () => {
     if (commentText.trim()) {
@@ -32,13 +37,13 @@ const CommentDrawer = ({ open, onClose, post }) => {
         </Box>
 
         <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-          {comments.length === 0 ? (
+          {postComments.length === 0 ? (
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
               No comments yet. Be the first!
             </Typography>
           ) : (
-            comments.map((comment) => {
-              const commentProfile = allProfiles.find(p => p.userId === comment.userId);
+            postComments.map((comment) => {
+              const commentProfile = getProfileByUserId(comment.userId);
               return (
                 <Box key={comment.id} sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
@@ -64,7 +69,7 @@ const CommentDrawer = ({ open, onClose, post }) => {
 
         <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-            <Avatar src={profile?.avatarUrl} sx={{ width: 32, height: 32, mt: 0.5 }} />
+            <Avatar src={currentUserProfile?.avatarUrl} sx={{ width: 32, height: 32, mt: 0.5 }} />
             <TextField
               fullWidth
               multiline

@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar, IconButton, Avatar, Menu, MenuItem, Typography, Box, InputBase, Drawer, List, ListItem, ListItemIcon, ListItemText, useMediaQuery } from '@mui/material';
 import { Search as SearchIcon, Home, Explore, Bookmarks, Person, ExitToApp, Menu as MenuIcon } from '@mui/icons-material';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../hooks/useAuth';
+import { useProfiles } from '../hooks/useProfiles';
 
 const Layout = ({ children }) => {
-  const { profile, logout } = useApp();
+  const { logout, user } = useAuth();
+  const { currentProfile } = useProfiles();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery('(max-width:768px)');
@@ -34,7 +36,7 @@ const Layout = ({ children }) => {
     { label: 'Feed', icon: <Home />, path: '/feed' },
     { label: 'Explore', icon: <Explore />, path: '/feed' },
     { label: 'Bookmarks', icon: <Bookmarks />, path: '/feed' },
-    { label: 'Profile', icon: <Person />, path: `/profile/${profile?.username}` },
+    { label: 'Profile', icon: <Person />, path: `/profile/${currentProfile?.username}` },
   ];
 
   const drawer = (
@@ -107,10 +109,10 @@ const Layout = ({ children }) => {
               <InputBase placeholder="Search..." sx={{ color: 'text.primary' }} />
             </Box>
             <IconButton onClick={handleMenu}>
-              <Avatar src={profile?.avatarUrl} alt={profile?.fullName} sx={{ width: 36, height: 36 }} />
+              <Avatar src={currentProfile?.avatarUrl} alt={currentProfile?.fullName} sx={{ width: 36, height: 36 }} />
             </IconButton>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-              <MenuItem onClick={() => { navigate(`/profile/${profile?.username}`); handleClose(); }}>
+              <MenuItem onClick={() => { navigate(`/profile/${currentProfile?.username}`); handleClose(); }}>
                 Profile
               </MenuItem>
               <MenuItem onClick={handleLogout}>
